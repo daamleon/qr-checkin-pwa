@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { QrCode, Home, Info, Database } from "lucide-react";
+import { QrCode, Scan, Info, Database } from "lucide-react";
 
 const Header: React.FC = () => {
   const location = useLocation();
@@ -9,25 +9,25 @@ const Header: React.FC = () => {
     <header className="bg-white shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
-          <div className="flex items-center">
+          <Link to="/" className="flex items-center">
             <QrCode className="h-8 w-8 text-blue-600" />
-            <h1 className="ml-2 text-xl font-bold text-gray-900">
+            <h1 className="ml-2 text-xs md:text-lg font-bold text-gray-900">
               QR Check-in
             </h1>
-          </div>
+          </Link>
 
           <nav className="flex items-center space-x-4">
             <Link
-              to="/"
+              to="/scan"
               className={`px-3 py-2 rounded-md text-sm font-medium ${
-                location.pathname === "/"
+                location.pathname === "/scan"
                   ? "text-blue-600 bg-blue-50"
                   : "text-gray-600 hover:text-blue-600 hover:bg-blue-50"
               }`}
             >
               <div className="flex items-center">
-                <Home className="h-5 w-5 mr-1" />
-                <span>Home</span>
+                <Scan className="h-5 w-5 mr-1" />
+                <span>Scan</span>
               </div>
             </Link>
 

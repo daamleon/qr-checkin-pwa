@@ -148,14 +148,30 @@ const QRScanner: React.FC = () => {
               <Loader className="h-8 w-8 text-blue-500 animate-spin" />
             </div>
           ) : (
-            <div className="overflow-hidden rounded-lg border border-gray-200">
+            <div
+              className={`relative ${
+                window.innerWidth <= 768
+                  ? "fixed inset-0 bg-black"
+                  : "overflow-hidden rounded-lg border border-gray-200 bg-white p-4"
+              }`}
+            >
               <QrScanner
                 delay={500}
                 onScan={handleScan}
                 onError={handleError}
                 constraints={{ video: { facingMode: "environment" } }}
-                style={{ width: "100%", height: "auto" }}
+                style={{
+                  width: "100%",
+                  height: window.innerWidth <= 768 ? "100vh" : "auto",
+                }}
               />
+
+              {/* Overlay untuk mobile */}
+              {window.innerWidth <= 768 && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="border-2 border-white rounded-lg w-64 h-64 animate-pulse"></div>
+                </div>
+              )}
             </div>
           )}
         </>

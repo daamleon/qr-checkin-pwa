@@ -4,13 +4,14 @@ import { NetworkProvider } from "./context/NetworkContext";
 import Header from "./components/Header";
 import NetworkStatus from "./components/NetworkStatus";
 import HomePage from "./pages/HomePage";
+import ScanPage from "./pages/ScanPage";
 import AboutPage from "./pages/AboutPage";
-import DataPage from "./pages/DataPage"; // ✅ Tambahkan import halaman DataPage
+import DataPage from "./pages/DataPage";
+import NotFound from "./pages/NotFound";
 import { registerSW } from "virtual:pwa-register";
 
 function App() {
   useEffect(() => {
-    // Register service worker for PWA
     const updateSW = registerSW({
       onNeedRefresh() {
         if (confirm("New content available. Reload?")) {
@@ -22,7 +23,6 @@ function App() {
       },
     });
 
-    // Process pending check-ins when coming back online
     const processPendingCheckIns = async () => {
       if (navigator.onLine) {
         try {
@@ -31,7 +31,6 @@ function App() {
           );
           if (pendingCheckIns.length === 0) return;
 
-          // Process each pending check-in
           const { checkInParticipant } = await import("./services/api");
 
           for (const id of pendingCheckIns) {
@@ -44,8 +43,6 @@ function App() {
               );
             }
           }
-
-          // Clear processed check-ins
           localStorage.setItem("pendingCheckIns", JSON.stringify([]));
         } catch (err) {
           console.error("Error processing pending check-ins:", err);
@@ -70,8 +67,9 @@ function App() {
             <Routes>
               <Route path="/" element={<HomePage />} />
               <Route path="/about" element={<AboutPage />} />
+              <Route path="/scan" element={<ScanPage />} />
               <Route path="/data" element={<DataPage />} />{" "}
-              {/* ✅ Tambahkan route ke /data */}
+              <Route path="*" element={<NotFound />} />
             </Routes>
           </main>
         </div>
