@@ -1,23 +1,24 @@
-import React, { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { NetworkProvider } from './context/NetworkContext';
-import Header from './components/Header';
-import NetworkStatus from './components/NetworkStatus';
-import HomePage from './pages/HomePage';
-import AboutPage from './pages/AboutPage';
-import { registerSW } from 'virtual:pwa-register';
+import { useEffect } from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { NetworkProvider } from "./context/NetworkContext";
+import Header from "./components/Header";
+import NetworkStatus from "./components/NetworkStatus";
+import HomePage from "./pages/HomePage";
+import AboutPage from "./pages/AboutPage";
+import DataPage from "./pages/DataPage"; // ✅ Tambahkan import halaman DataPage
+import { registerSW } from "virtual:pwa-register";
 
 function App() {
   useEffect(() => {
     // Register service worker for PWA
     const updateSW = registerSW({
       onNeedRefresh() {
-        if (confirm('New content available. Reload?')) {
+        if (confirm("New content available. Reload?")) {
           updateSW(true);
         }
       },
       onOfflineReady() {
-        console.log('App ready to work offline');
+        console.log("App ready to work offline");
       },
     });
 
@@ -25,33 +26,37 @@ function App() {
     const processPendingCheckIns = async () => {
       if (navigator.onLine) {
         try {
-          const pendingCheckIns = JSON.parse(localStorage.getItem('pendingCheckIns') || '[]');
+          const pendingCheckIns = JSON.parse(
+            localStorage.getItem("pendingCheckIns") || "[]"
+          );
           if (pendingCheckIns.length === 0) return;
 
           // Process each pending check-in
-          // This is a simplified version - in a real app, you'd want to handle failures better
-          const { checkInParticipant } = await import('./services/api');
-          
+          const { checkInParticipant } = await import("./services/api");
+
           for (const id of pendingCheckIns) {
             try {
               await checkInParticipant(id);
             } catch (err) {
-              console.error(`Failed to process offline check-in for ID: ${id}`, err);
+              console.error(
+                `Failed to process offline check-in for ID: ${id}`,
+                err
+              );
             }
           }
-          
+
           // Clear processed check-ins
-          localStorage.setItem('pendingCheckIns', JSON.stringify([]));
+          localStorage.setItem("pendingCheckIns", JSON.stringify([]));
         } catch (err) {
-          console.error('Error processing pending check-ins:', err);
+          console.error("Error processing pending check-ins:", err);
         }
       }
     };
 
-    window.addEventListener('online', processPendingCheckIns);
-    
+    window.addEventListener("online", processPendingCheckIns);
+
     return () => {
-      window.removeEventListener('online', processPendingCheckIns);
+      window.removeEventListener("online", processPendingCheckIns);
     };
   }, []);
 
@@ -65,6 +70,8 @@ function App() {
             <Routes>
               <Route path="/" element={<HomePage />} />
               <Route path="/about" element={<AboutPage />} />
+              <Route path="/data" element={<DataPage />} />{" "}
+              {/* ✅ Tambahkan route ke /data */}
             </Routes>
           </main>
         </div>

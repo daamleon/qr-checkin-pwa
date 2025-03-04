@@ -1,44 +1,80 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import QrScanner from "react-qr-scanner";
-import { Camera, RefreshCw } from "lucide-react";
-import { useNetwork } from "../context/NetworkContext";
+import { AlertCircle, CheckCircle, Loader, User, RotateCw } from "lucide-react";
+import { fetchParticipantById, checkInParticipant } from "../services/api";
 
-interface QRScannerProps {
-  onScan: (data: string) => void;
-  isScanning: boolean;
+interface Participant {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  checked_in: boolean;
+  check_in_time?: string;
 }
 
-const QRScanner: React.FC<QRScannerProps> = ({ onScan, isScanning }) => {
-  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+const QRScanner: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
-  const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
-  const { isOnline } = useNetwork();
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [participantData, setParticipantData] = useState<Participant | null>(
+    null
+  );
+  const [showScanner, setShowScanner] = useState<boolean>(true);
 
-  useEffect(() => {
-    const checkCameraPermission = async () => {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: true,
-        });
-        stream.getTracks().forEach((track) => track.stop());
-        setHasPermission(true);
+  const handleScan = async (result: any) => {
+    if (result) {
+      const scannedData = result?.text || result?.data || result;
+      console.log("Scanned QR Data:", scannedData);
 
-        // Dapatkan daftar kamera yang tersedia
-        const deviceList = await navigator.mediaDevices.enumerateDevices();
-        setDevices(deviceList.filter((device) => device.kind === "videoinput"));
-      } catch (err) {
-        console.error("Camera permission error:", err);
-        setHasPermission(false);
-        setError("Camera access denied. Please enable camera permissions.");
+      if (!scannedData) {
+        setError("Invalid QR Code.");
+        return;
       }
-    };
 
-    checkCameraPermission();
-  }, []);
+      setIsLoading(true);
+      setError(null);
+      setSuccessMessage(null);
+      setParticipantData(null); // Reset participant data sebelum memulai proses baru
 
-  const handleScan = (result: any) => {
-    if (result && result.text && isScanning) {
-      onScan(result.text);
+      try {
+        console.log(`Fetching participant with ID: ${scannedData.trim()}`);
+        const participant = await fetchParticipantById(scannedData.trim());
+
+        if (!participant) {
+          setError("Participant not found.");
+          return;
+        }
+
+        console.log(`Processing check-in for ${participant.id}`);
+
+        // Jika peserta sudah check-in, tampilkan pesan dan data
+        if (participant.checked_in) {
+          setSuccessMessage(`${participant.name} has already checked in.`);
+          setParticipantData(participant);
+          setShowScanner(false); // Sembunyikan scanner
+          return;
+        }
+
+        // Jika belum check-in, lakukan check-in
+        const checkInResponse = await checkInParticipant(participant.id);
+
+        if (checkInResponse.success) {
+          setSuccessMessage(`Checked in ${participant.name} successfully!`);
+          setParticipantData({
+            ...participant,
+            checked_in: true,
+            check_in_time: new Date().toLocaleString(),
+          });
+          setShowScanner(false); // Sembunyikan scanner setelah check-in berhasil
+        } else {
+          setError("Failed to check-in participant.");
+        }
+      } catch (err) {
+        console.error("Error during check-in:", err);
+        setError("Failed to process check-in.");
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -47,73 +83,83 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScan, isScanning }) => {
     setError("Error accessing camera. Please try again.");
   };
 
-  if (hasPermission === null) {
-    return (
-      <div className="flex flex-col items-center justify-center p-4 bg-gray-100 rounded-lg">
-        <RefreshCw className="h-12 w-12 text-gray-400 animate-spin" />
-        <p className="mt-4 text-gray-600">Requesting camera permission...</p>
-      </div>
-    );
-  }
-
-  if (hasPermission === false) {
-    return (
-      <div className="flex flex-col items-center justify-center p-4 bg-red-50 rounded-lg">
-        <Camera className="h-12 w-12 text-red-500" />
-        <p className="mt-4 text-red-600">{error || "Camera access denied"}</p>
-        <button
-          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
-          onClick={() => window.location.reload()}
-        >
-          Try Again
-        </button>
-      </div>
-    );
-  }
-
-  if (!isOnline) {
-    return (
-      <div className="flex flex-col items-center justify-center p-4 bg-yellow-50 rounded-lg">
-        <Camera className="h-12 w-12 text-yellow-500" />
-        <p className="mt-4 text-yellow-600">
-          You are offline. QR scanning is available but check-in will be queued
-          until you're back online.
-        </p>
-      </div>
-    );
-  }
+  const handleRescan = () => {
+    setShowScanner(true); // Tampilkan kembali scanner
+    setParticipantData(null); // Reset data peserta
+    setSuccessMessage(null); // Reset pesan sukses
+    setError(null); // Reset pesan error
+  };
 
   return (
-    <div className="w-full max-w-md mx-auto">
+    <div className="space-y-4">
       {error && (
-        <div className="mb-4 p-2 bg-red-100 text-red-700 rounded-md">
-          {error}
+        <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg flex items-center">
+          <AlertCircle className="h-4 w-4 mr-2" />
+          <p>{error}</p>
         </div>
       )}
 
-      <div className="overflow-hidden rounded-lg shadow-lg">
-        <QrScanner
-          delay={500}
-          onScan={handleScan}
-          onError={handleError}
-          constraints={{ video: { facingMode: "environment" } }} // Perbaikan facingMode
-          style={{ width: "100%" }}
-        />
-      </div>
+      {successMessage && (
+        <div className="p-3 bg-green-50 text-green-600 text-sm rounded-lg flex items-center">
+          <CheckCircle className="h-4 w-4 mr-2" />
+          <p>{successMessage}</p>
+        </div>
+      )}
 
-      {/* Debugging: Tampilkan daftar kamera */}
-      <div className="mt-4 text-center text-gray-600">
-        <p>Available Cameras:</p>
-        <ul className="text-sm text-gray-500">
-          {devices.map((device, index) => (
-            <li key={index}>{device.label || `Camera ${index + 1}`}</li>
-          ))}
-        </ul>
-      </div>
+      {participantData && (
+        <div className="p-6 bg-white rounded-lg shadow-sm">
+          <div className="flex items-center space-x-4 mb-4">
+            <User className="h-8 w-8 text-gray-700" />
+            <div>
+              <h3 className="text-xl font-semibold text-gray-800">
+                {participantData.name}
+              </h3>
+              <p className="text-sm text-gray-600">
+                {participantData.checked_in
+                  ? `Checked in at: ${participantData.check_in_time}`
+                  : "Not checked in yet."}
+              </p>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <div>
+              <p className="text-sm text-gray-600">Email:</p>
+              <p className="text-gray-800">{participantData.email}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600">Phone:</p>
+              <p className="text-gray-800">{participantData.phone}</p>
+            </div>
+          </div>
+          <button
+            onClick={handleRescan}
+            className="mt-6 w-full flex items-center justify-center px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
+          >
+            <RotateCw className="h-4 w-4 mr-2" />
+            <span>Scan Again</span>
+          </button>
+        </div>
+      )}
 
-      <div className="mt-4 text-center text-gray-600">
-        <p>Position the QR code within the frame to scan</p>
-      </div>
+      {showScanner && (
+        <>
+          {isLoading ? (
+            <div className="flex justify-center py-6">
+              <Loader className="h-8 w-8 text-blue-500 animate-spin" />
+            </div>
+          ) : (
+            <div className="overflow-hidden rounded-lg border border-gray-200">
+              <QrScanner
+                delay={500}
+                onScan={handleScan}
+                onError={handleError}
+                constraints={{ video: { facingMode: "environment" } }}
+                style={{ width: "100%", height: "auto" }}
+              />
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 };
