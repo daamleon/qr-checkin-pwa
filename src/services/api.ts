@@ -14,7 +14,7 @@ export const fetchParticipantById = async (id: string) => {
 
     const data = await response.json();
 
-    return data.length ? data[0] : null; // ✅ JSON Server mengembalikan array, ambil item pertama
+    return data.length ? data[0] : null; 
   } catch (error) {
     console.error("Error fetching participant:", error);
     throw error;
@@ -25,7 +25,6 @@ export const checkInParticipant = async (id: string): Promise<ApiResponse> => {
   try {
     console.log(`Checking in participant: ${id}`);
 
-    // 🔍 Ambil peserta berdasarkan ID
     const getResponse = await fetch(`${API_URL}/participants?id=${id}`);
 
     if (!getResponse.ok) {
@@ -48,7 +47,6 @@ export const checkInParticipant = async (id: string): Promise<ApiResponse> => {
       };
     }
 
-    // 🔥 Perbarui status check-in dengan PATCH (bukan PUT)
     const updateResponse = await fetch(
       `${API_URL}/participants/${participant.id}`,
       {

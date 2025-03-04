@@ -34,7 +34,7 @@ const QRScanner: React.FC = () => {
       setIsLoading(true);
       setError(null);
       setSuccessMessage(null);
-      setParticipantData(null); // Reset participant data sebelum memulai proses baru
+      setParticipantData(null);
 
       try {
         console.log(`Fetching participant with ID: ${scannedData.trim()}`);
@@ -47,15 +47,13 @@ const QRScanner: React.FC = () => {
 
         console.log(`Processing check-in for ${participant.id}`);
 
-        // Jika peserta sudah check-in, tampilkan pesan dan data
         if (participant.checked_in) {
           setSuccessMessage(`${participant.name} has already checked in.`);
           setParticipantData(participant);
-          setShowScanner(false); // Sembunyikan scanner
+          setShowScanner(false); 
           return;
         }
 
-        // Jika belum check-in, lakukan check-in
         const checkInResponse = await checkInParticipant(participant.id);
 
         if (checkInResponse.success) {
@@ -65,7 +63,7 @@ const QRScanner: React.FC = () => {
             checked_in: true,
             check_in_time: new Date().toLocaleString(),
           });
-          setShowScanner(false); // Sembunyikan scanner setelah check-in berhasil
+          setShowScanner(false); 
         } else {
           setError("Failed to check-in participant.");
         }
@@ -166,7 +164,6 @@ const QRScanner: React.FC = () => {
                 }}
               />
 
-              {/* Overlay untuk mobile */}
               {window.innerWidth <= 768 && (
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="border-2 border-white rounded-lg w-64 h-64 animate-pulse"></div>

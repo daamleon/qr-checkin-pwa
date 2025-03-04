@@ -13,12 +13,11 @@ const CameraPermission: React.FC<CameraPermissionProps> = ({
 
   const requestPermission = async () => {
     try {
-      // ✅ Pastikan `getUserMedia()` hanya dipanggil setelah interaksi pengguna
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      stream.getTracks().forEach((track) => track.stop()); // Matikan kamera setelah izin diberikan
+      stream.getTracks().forEach((track) => track.stop());
 
       setPermissionStatus("granted");
-      onPermissionGranted(); // Aktifkan scanner setelah izin diberikan
+      onPermissionGranted();
     } catch (error) {
       console.error("Camera permission denied:", error);
       setPermissionStatus("denied");
@@ -42,13 +41,11 @@ const CameraPermission: React.FC<CameraPermissionProps> = ({
     }
   };
 
-  // ✅ Cek apakah user sudah memberikan izin sebelumnya
   React.useEffect(() => {
     checkExistingPermission();
   }, []);
 
-  if (permissionStatus === "granted") return null; // Jangan tampilkan modal jika izin sudah diberikan
-
+  if (permissionStatus === "granted") return null;
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
       <div className="bg-white p-6 rounded-lg shadow-lg text-center max-w-sm">
@@ -68,7 +65,7 @@ const CameraPermission: React.FC<CameraPermissionProps> = ({
 
         <button
           className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-          onClick={requestPermission} // ✅ Panggil `getUserMedia()` hanya saat tombol ditekan
+          onClick={requestPermission}
         >
           Allow Camera
         </button>
