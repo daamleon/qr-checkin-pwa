@@ -6,8 +6,8 @@
       "email": "john.doe@example.com",
       "phone": "+62812345678",
       "ticket_type": "VIP",
-      "checked_in": true,
-      "check_in_time": "2025-03-04T04:56:23.356Z"
+      "checked_in": false,
+      "check_in_time": "null"
     },
     {
       "id": "P002",
