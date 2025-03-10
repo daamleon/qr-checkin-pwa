@@ -12,7 +12,7 @@ const ScanPage: React.FC = () => {
     >
       <div>
         <h1 className="text-2xl font-semibold text-center text-gray-800 m-2">
-          QR Code Check-in
+          Scan QR Tiket
         </h1>
 
         {!isOnline && (
